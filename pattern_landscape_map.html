@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PATTERN Program Landscape Map</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --purple:    #7520DC;
+    --blue:      #3372F1;
+    --yellow:    #FFC702;
+    --red:       #F74135;
+    --cream:     #FDF4E1;
+    --slate:     #74918F;
+    --lavender:  #BA87ED;
+    --near-black:#252525;
+    --convey-color:    #3372F1;
+    --convene-color:   #FFC702;
+    --cultivate-color: #F74135;
+    --advocacy-color:  #7520DC;
+    --font-display: 'Barlow Condensed', sans-serif;
+    --font-body:    'Outfit', sans-serif;
+  }
+  body { background: var(--cream); font-family: var(--font-body); color: var(--near-black); min-height: 100vh; overflow-x: hidden; }
+  header { background: var(--near-black); padding: 20px 32px 16px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  .header-title { font-family: var(--font-display); font-weight: 900; font-size: 36px; letter-spacing: 0.02em; text-transform: uppercase; color: var(--cream); line-height: 1; }
+  .header-sub { font-family: var(--font-body); font-size: 13px; color: var(--slate); margin-top: 4px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .controls { background: white; border-bottom: 1.5px solid #e8e2d4; padding: 12px 32px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .controls label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate); margin-right: 4px; }
+  .search-wrap { position: relative; display: flex; align-items: center; }
+  .search-wrap svg { position: absolute; left: 10px; pointer-events: none; color: var(--slate); }
+  #search-input { font-family: var(--font-body); font-size: 13px; border: 1.5px solid #d4cfc5; border-radius: 6px; padding: 7px 12px 7px 32px; background: var(--cream); color: var(--near-black); width: 200px; outline: none; transition: border-color 0.2s; }
+  #search-input:focus { border-color: var(--blue); }
+  select { font-family: var(--font-body); font-size: 13px; border: 1.5px solid #d4cfc5; border-radius: 6px; padding: 7px 28px 7px 10px; background: var(--cream); color: var(--near-black); appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2374918F' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; outline: none; cursor: pointer; transition: border-color 0.2s; }
+  select:focus { border-color: var(--blue); }
+  .filter-group { display: flex; align-items: center; gap: 6px; }
+  .divider { width: 1px; height: 28px; background: #d4cfc5; }
+  .reset-btn { font-family: var(--font-body); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border: 1.5px solid var(--near-black); border-radius: 6px; padding: 7px 14px; background: transparent; color: var(--near-black); cursor: pointer; transition: all 0.15s; }
+  .reset-btn:hover { background: var(--near-black); color: var(--cream); }
+  .main { display: flex; height: calc(100vh - 130px); min-height: 600px; }
+  #canvas { flex: 1; position: relative; overflow: hidden; }
+  #canvas svg { width: 100%; height: 100%; }
+  .node-group { cursor: pointer; }
+  .node-circle { transition: opacity 0.3s; }
+  .node-group.dimmed .node-circle { opacity: 0.12; }
+  .node-group.dimmed .node-label  { opacity: 0.08; }
+  .node-group.dimmed .status-dot  { opacity: 0.1; }
+  .node-group.dimmed .adj-ring    { opacity: 0.08; }
+  .sidebar { width: 300px; min-width: 260px; background: white; border-left: 1.5px solid #e8e2d4; display: flex; flex-direction: column; overflow-y: auto; }
+  .legend-section { padding: 20px 20px 16px; border-bottom: 1.5px solid #e8e2d4; }
+  .legend-title { font-family: var(--font-display); font-weight: 900; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); margin-bottom: 12px; }
+  .legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; font-size: 13px; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .legend-size-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .legend-size-label { font-size: 12px; color: #6b6560; }
+  .sz-large  { width: 22px; height: 22px; border-radius: 50%; background: #c5c0b8; }
+  .sz-medium { width: 16px; height: 16px; border-radius: 50%; background: #c5c0b8; }
+  .sz-small  { width: 10px; height: 10px; border-radius: 50%; background: #c5c0b8; }
+  .detail-panel { flex: 1; padding: 20px; }
+  .detail-empty { font-size: 13px; color: #a09a92; font-style: italic; line-height: 1.6; padding-top: 8px; }
+  .detail-name { font-family: var(--font-display); font-weight: 900; font-size: 22px; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.1; margin-bottom: 10px; }
+  .detail-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .badge { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 9px; border-radius: 4px; }
+  .badge-active   { background: #d4edda; color: #1a6630; }
+  .badge-dormant  { background: #e8e2d4; color: #6b6560; }
+  .badge-adjacent { background: #ede5f8; color: #4a2090; }
+  .detail-desc { font-size: 13px; line-height: 1.65; color: #3d3830; margin-bottom: 14px; }
+  .detail-pillars-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--slate); margin-bottom: 6px; }
+  .detail-pillar-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+  .pillar-tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 9px; border-radius: 4px; color: white; }
+  .pt-convey    { background: var(--convey-color); }
+  .pt-convene   { background: var(--near-black); color: var(--yellow); }
+  .pt-cultivate { background: var(--cultivate-color); }
+  .pt-advocacy  { background: var(--advocacy-color); }
+  .node-label { font-family: var(--font-body); font-size: 11px; font-weight: 600; fill: var(--near-black); pointer-events: none; transition: opacity 0.3s; paint-order: stroke; stroke: var(--cream); stroke-width: 3px; stroke-linejoin: round; }
+  .status-dot { pointer-events: none; }
+  .adj-ring   { pointer-events: none; }
+  .edge-line  { pointer-events: none; }
+  .pulse-ring { pointer-events: none; }
+  .note-tag { font-size: 11px; color: #6b6560; background: #f0ece3; border-radius: 4px; padding: 2px 7px; display: inline-block; margin-top: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="header-title">PATTERN Program Landscape</div>
+    <div class="header-sub">Indiana's Creative Economy — Program &amp; Initiative Map</div>
+  </div>
+</header>
+<div class="controls">
+  <div class="filter-group">
+    <label>Search</label>
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="search-input" type="text" placeholder="Find a program…">
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="filter-group">
+    <label>Pillar</label>
+    <select id="pillar-filter">
+      <option value="all">All pillars</option>
+      <option value="convey">Conveying</option>
+      <option value="convene">Convening</option>
+      <option value="cultivate">Cultivating</option>
+      <option value="advocacy">Advocacy</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Status</label>
+    <select id="status-filter">
+      <option value="all">All statuses</option>
+      <option value="active">Active</option>
+      <option value="dormant">Dormant</option>
+      <option value="adjacent">Adjacent</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Size</label>
+    <select id="size-filter">
+      <option value="all">All sizes</option>
+      <option value="large">Large</option>
+      <option value="medium">Medium</option>
+      <option value="small">Small</option>
+    </select>
+  </div>
+  <div class="divider"></div>
+  <button class="reset-btn" id="reset-btn">Reset</button>
+</div>
+
+<div class="main">
+  <div id="canvas"><svg id="map-svg"></svg></div>
+  <aside class="sidebar">
+    <div class="legend-section">
+      <div class="legend-title">Pillars</div>
+      <div class="legend-row"><div class="legend-dot" style="background:var(--convey-color)"></div> Conveying</div>
+      <div class="legend-row"><div class="legend-dot" style="background:var(--convene-color)"></div> Convening</div>
+      <div class="legend-row"><div class="legend-dot" style="background:var(--cultivate-color)"></div> Cultivating</div>
+      <div class="legend-row"><div class="legend-dot" style="background:var(--advocacy-color)"></div> Advocacy</div>
+    </div>
+    <div class="legend-section">
+      <div class="legend-title">Status</div>
+      <div class="legend-row">
+        <div style="width:14px;height:14px;border-radius:50%;background:#3372F1;flex-shrink:0;box-shadow:0 0 0 4px rgba(51,114,241,0.2);"></div>
+        Active (pulses when selected)
+      </div>
+      <div class="legend-row"><div class="legend-dot" style="background:#b8b3ab"></div> Dormant</div>
+      <div class="legend-row">
+        <div style="width:14px;height:14px;border-radius:50%;background:#BA87ED;border:2px dashed #7520DC;flex-shrink:0;"></div>
+        Adjacent / overlapping
+      </div>
+      <div style="font-size:11px;color:#8a8480;line-height:1.5;margin-top:6px;padding-left:24px;">Dashed ring = not fully PATTERN-owned. Lines connect parent programs to sub-initiatives.</div>
+    </div>
+    <div class="legend-section">
+      <div class="legend-title">Program Weight</div>
+      <div class="legend-size-wrap"><div class="sz-large"></div><span class="legend-size-label">Large</span></div>
+      <div class="legend-size-wrap"><div class="sz-medium"></div><span class="legend-size-label">Medium</span></div>
+      <div class="legend-size-wrap"><div class="sz-small"></div><span class="legend-size-label">Small</span></div>
+    </div>
+    <div class="detail-panel" id="detail-panel">
+      <div class="detail-empty">Click any program node to see details here.</div>
+    </div>
+  </aside>
+</div>
+
+<script>
+const PILLAR_COLORS = {
+  convey:    '#3372F1',
+  convene:   '#FFC702',
+  cultivate: '#F74135',
+  advocacy:  '#7520DC',
+};
+const NODE_RADII = { large: 38, medium: 26, small: 16 };
+
+// primary_pillar drives cluster placement.
+// For dual-pillar nodes (e.g. CE Playbook: convey+advocacy),
+// primary_pillar is set to a midpoint zone by using a custom fx/fy override.
+const PROGRAMS = [
+
+  // ── CONVENING ──────────────────────────────────────────────
+  { id:'summit',
+    name:'Annual Creative Economy Summit',
+    size:'large', status:'active', pillars:['convene'], primary_pillar:'convene',
+    desc:'PATTERN\'s flagship convening event. Brings together Indiana\'s creative sector annually for cross-sector dialogue, connection, and advocacy. The highest-weight convening program.' },
+
+  { id:'stutz',
+    name:'Stutz Events & Social',
+    size:'medium', status:'active', pillars:['convene'], primary_pillar:'convene',
+    desc:'Events and social media programming tied to the Stutz, a landmark creative hub in Indianapolis. Convenes creative community around a shared physical and digital space.' },
+
+  { id:'ksm-panel',
+    name:'KSM Panel Partnership',
+    size:'small', status:'active', pillars:['convene'], primary_pillar:'convene',
+    desc:'A panel partnership with KSM. Small but active — contributes to convening creative and business communities in cross-sector conversation.' },
+
+  { id:'the-bus',
+    name:'The Bus',
+    size:'small', status:'dormant', pillars:['convene'], primary_pillar:'convene',
+    desc:'A small, dormant convening initiative — likely a mobile or touring activation. Currently inactive.' },
+
+  // ── CONVEYING ──────────────────────────────────────────────
+  { id:'pattern-mag',
+    name:'PATTERN Magazine',
+    size:'large', status:'active', pillars:['convey'], primary_pillar:'convey',
+    desc:'PATTERN\'s flagship publication — the most visible conveying asset. Tells stories about Indiana\'s creative economy, its people, businesses, and culture.' },
+
+  { id:'digital-covers',
+    name:'Digital Covers',
+    size:'large', status:'active', pillars:['convey'], primary_pillar:'convey',
+    desc:'Digital-first cover content extending PATTERN Magazine\'s reach into social and web channels. Active and closely tied to the editorial calendar.' },
+
+  { id:'zine',
+    name:'11th + Capitol Zine',
+    size:'small', status:'dormant', pillars:['convey'], primary_pillar:'convey',
+    desc:'A zine publication formerly produced by PATTERN. Dormant — part of the conveying function through grassroots, independent publishing.' },
+
+  { id:'other-zines',
+    name:'Other Zines',
+    size:'small', status:'dormant', pillars:['convey'], primary_pillar:'convey',
+    desc:'Additional zine projects formerly in PATTERN\'s conveying toolkit. Dormant — a publication format that could be reactivated.' },
+
+  { id:'wesleys-project',
+    name:"Wesley's Project",
+    size:'medium', status:'active', pillars:['convey'], primary_pillar:'convey',
+    note:'Details TBD — listed in the Conveying pillar of the program brief.',
+    desc:'A conveying initiative attributed to Wesley. Specific scope is still being defined — listed as an active Conveying program in the organizational brief.' },
+
+  // CE Playbook spans Conveying + Advocacy; primary set to 'convey'
+  // but we'll apply a custom anchor midpoint in the force layout
+  { id:'ce-playbook',
+    name:'Creative Economy Playbook / Network',
+    size:'large', status:'dormant', pillars:['convey','advocacy'], primary_pillar:'convey',
+    dualZone: true,
+    desc:'A resource and network initiative spanning both Conveying and Advocacy. Currently dormant — represents a significant future reactivation opportunity across both functions.' },
+
+  // Client work — functional fit is Conveying; flagged as client work
+  { id:'iedc-yearbook',
+    name:'IEDC Yearbook',
+    size:'medium', status:'active', pillars:['convey'], primary_pillar:'convey',
+    note:'Client work',
+    desc:'Client work produced for the Indiana Economic Development Corporation. Contributes to PATTERN\'s conveying function by communicating the state\'s economic development narrative.' },
+
+  { id:'iu-innovates',
+    name:'IU Innovates',
+    size:'medium', status:'active', pillars:['convey'], primary_pillar:'convey',
+    note:'Client work',
+    desc:'Client project with Indiana University, communicating innovation stories. Part of the active client work portfolio within the conveying function.' },
+
+  { id:'other-client',
+    name:'Other Client Projects',
+    size:'medium', status:'active', pillars:['convey'], primary_pillar:'convey',
+    note:'Client work',
+    desc:'Ongoing client-facing work beyond named anchor clients. Contributes to PATTERN\'s revenue and the conveying function.' },
+
+  // ── CULTIVATING ────────────────────────────────────────────
+  { id:'intern-program',
+    name:'Intern Program',
+    size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
+    desc:'PATTERN\'s internship pipeline for emerging creative talent in Indiana. Active and focused on workforce development and hands-on learning.' },
+
+  { id:'fellowship',
+    name:'Fellowship Program',
+    size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
+    desc:'A deeper talent investment than the internship — fellows receive extended engagement with PATTERN\'s mission and work. Central to the cultivating function.' },
+
+  { id:'space-residency',
+    name:'S.P.A.C.E. Residency',
+    size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
+    desc:'A residency program supporting creative practitioners with space, community, and resources to develop their practice. Active.' },
+
+  { id:'createway',
+    name:'CreateWay Speakers Bureau',
+    size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
+    desc:'A speakers bureau connecting creative professionals with audiences across Indiana. Supports ecosystem-building and practitioner visibility.' },
+
+  { id:'stitchworks',
+    name:'Stitchworks',
+    size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
+    desc:'Active program within PATTERN\'s cultivating work — focused on a specific creative sector niche within the broader talent and ecosystem development mission.' },
+
+  { id:'ongoing-grants',
+    name:'Ongoing Grants',
+    size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
+    desc:'Active grant funding that supports PATTERN\'s cultivating work — enabling talent development, creative business support, and workforce ecosystem programs.' },
+
+  // ── ADVOCACY ───────────────────────────────────────────────
+  { id:'cela',
+    name:'CELA',
+    size:'medium', status:'adjacent', pillars:['advocacy'], primary_pillar:'advocacy',
+    desc:'An adjacent initiative in PATTERN\'s orbit focused on advocacy for Indiana\'s creative economy. Externally affiliated — active and overlapping in mission.' },
+
+  { id:'indiana-music',
+    name:'Indiana Music Alliance',
+    size:'medium', status:'adjacent', pillars:['advocacy'], primary_pillar:'advocacy',
+    desc:'An adjacent organization advancing Indiana\'s music sector. PATTERN supports through panel programming and presence. Parent organization of IMA Panels.' },
+
+  { id:'ima-panels',
+    name:'IMA Panels',
+    size:'small', status:'adjacent', pillars:['convene','advocacy'], primary_pillar:'advocacy',
+    parent:'indiana-music',
+    desc:'Panel programming in partnership with the Indiana Music Alliance. A sub-initiative of IMA — active and small, serving both convening and advocacy functions.' },
+];
+
+const EDGES = [
+  { source:'indiana-music', target:'ima-panels' },
+];
+
+const PILLAR_LABEL_DEFS = [
+  { key:'convey',    label:'CONVEYING',   side:'top',    hAlign:'left'  },
+  { key:'convene',   label:'CONVENING',   side:'top',    hAlign:'right' },
+  { key:'cultivate', label:'CULTIVATING', side:'bottom', hAlign:'right' },
+  { key:'advocacy',  label:'ADVOCACY',    side:'bottom', hAlign:'left'  },
+];
+
+let activeNode = null;
+let pulseTimer  = null;
+let pulseRunning = false;
+let pulseNodeId  = null;
+let filterPillar = 'all', filterStatus = 'all', filterSize = 'all', searchText = '';
+
+const svg = d3.select('#map-svg');
+const canvasEl = document.getElementById('canvas');
+let nodes, simulation;
+
+function getW() { return canvasEl.clientWidth; }
+function getH() { return canvasEl.clientHeight; }
+
+function nodeColor(d) {
+  if (d.status === 'dormant')  return '#b8b3ab';
+  if (d.status === 'adjacent') return '#BA87ED';
+  return PILLAR_COLORS[d.primary_pillar] || '#888';
+}
+function nodeStroke(d) {
+  if (d.status === 'adjacent') return '#7520DC';
+  if (d.status === 'dormant')  return '#9a9590';
+  return 'rgba(0,0,0,0.18)';
+}
+function nodeRadius(d) { return NODE_RADII[d.size] || 20; }
+
+function isFiltered(d) {
+  if (filterPillar !== 'all' && !d.pillars.includes(filterPillar)) return true;
+  if (filterStatus !== 'all' && d.status !== filterStatus) return true;
+  if (filterSize   !== 'all' && d.size   !== filterSize)   return true;
+  if (searchText && !d.name.toLowerCase().includes(searchText.toLowerCase())) return true;
+  return false;
+}
+
+function getAnchors(W, H, labelFontSize) {
+  const topPad    = labelFontSize + 28;
+  const bottomPad = labelFontSize + 28;
+  const usableTop    = topPad;
+  const usableBottom = H - bottomPad;
+  const quarterY = usableTop + (usableBottom - usableTop) * 0.28;
+  const threeQY  = usableTop + (usableBottom - usableTop) * 0.72;
+  // midpoint zone for dual-pillar nodes (convey+advocacy = left-center vertical midpoint)
+  const midY = (quarterY + threeQY) / 2;
+  return {
+    convey:    { fx: 0.21, fy: quarterY / H },
+    convene:   { fx: 0.74, fy: quarterY / H },
+    cultivate: { fx: 0.74, fy: threeQY  / H },
+    advocacy:  { fx: 0.21, fy: threeQY  / H },
+    dual_convey_advocacy: { fx: 0.10, fy: midY / H },
+  };
+}
+
+function init() {
+  const W = getW(), H = getH();
+  svg.selectAll('*').remove();
+  stopPulse();
+
+  const labelFontSize = Math.min(W * 0.062, 60);
+  const PILLAR_ANCHORS = getAnchors(W, H, labelFontSize);
+  const pad = 18;
+
+  PILLAR_LABEL_DEFS.forEach(pl => {
+    const col     = PILLAR_COLORS[pl.key];
+    const x       = pl.hAlign === 'left' ? pad : W - pad;
+    const y       = pl.side === 'top'    ? pad : H - pad;
+    const anchor  = pl.hAlign === 'left' ? 'start' : 'end';
+    const baseline = pl.side === 'top'   ? 'hanging' : 'auto';
+    svg.append('text')
+      .attr('x', x).attr('y', y)
+      .attr('fill', col)
+      .attr('font-family', "'Barlow Condensed', sans-serif")
+      .attr('font-weight', 900)
+      .attr('font-size', labelFontSize)
+      .attr('text-anchor', anchor)
+      .attr('dominant-baseline', baseline)
+      .attr('opacity', 0.38)
+      .attr('pointer-events', 'none')
+      .attr('user-select', 'none')
+      .text(pl.label);
+  });
+
+  nodes = PROGRAMS.map(d => {
+    const anchorKey = d.dualZone ? 'dual_convey_advocacy' : d.primary_pillar;
+    const anchor = PILLAR_ANCHORS[anchorKey];
+    const jitter = (Math.random() - 0.5) * 60;
+    return { ...d, x: anchor.fx * W + jitter, y: anchor.fy * H + jitter };
+  });
+
+  const nodeById = Object.fromEntries(nodes.map(n => [n.id, n]));
+  const edgeData = EDGES.map(e => ({ source: nodeById[e.source], target: nodeById[e.target] }));
+
+  const edgeG = svg.append('g').attr('class', 'edges');
+  const edgeLines = edgeG.selectAll('.edge-line')
+    .data(edgeData).join('line')
+    .attr('class', 'edge-line')
+    .attr('stroke', '#7520DC').attr('stroke-width', 1.5)
+    .attr('stroke-dasharray', '4 3').attr('opacity', 0.45);
+
+  simulation = d3.forceSimulation(nodes)
+    .force('x', d3.forceX(d => {
+      const key = d.dualZone ? 'dual_convey_advocacy' : d.primary_pillar;
+      return PILLAR_ANCHORS[key].fx * W;
+    }).strength(0.24))
+    .force('y', d3.forceY(d => {
+      const key = d.dualZone ? 'dual_convey_advocacy' : d.primary_pillar;
+      return PILLAR_ANCHORS[key].fy * H;
+    }).strength(0.24))
+    .force('collide', d3.forceCollide(d => nodeRadius(d) + 13).strength(0.9))
+    .force('charge', d3.forceManyBody().strength(-60))
+    .force('link', d3.forceLink(edgeData).distance(75).strength(0.4))
+    .alpha(1).alphaDecay(0.025)
+    .on('tick', () => {
+      nodeGroups.attr('transform', d => `translate(${d.x},${d.y})`);
+      edgeLines
+        .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    });
+
+  const nodeG = svg.append('g').attr('class', 'nodes');
+  const nodeGroups = nodeG.selectAll('.node-group')
+    .data(nodes, d => d.id).join('g')
+    .attr('class', 'node-group')
+    .on('click', (event, d) => { event.stopPropagation(); selectNode(d); })
+    .call(
+      d3.drag()
+        .on('start', (event, d) => { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag',  (event, d) => { d.fx = event.x; d.fy = event.y; })
+        .on('end',   (event, d) => { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
+    );
+
+  // Pulse ring — hidden until node is selected
+  nodeGroups.append('circle')
+    .attr('class', 'pulse-ring')
+    .attr('r', d => nodeRadius(d))
+    .attr('fill', 'none')
+    .attr('stroke', d => nodeColor(d))
+    .attr('stroke-width', 2)
+    .attr('opacity', 0);
+
+  // Adjacent dashed outer ring
+  nodeGroups.filter(d => d.status === 'adjacent')
+    .append('circle').attr('class', 'adj-ring')
+    .attr('r', d => nodeRadius(d) + 7)
+    .attr('fill', 'none')
+    .attr('stroke', '#7520DC')
+    .attr('stroke-width', 1.5)
+    .attr('stroke-dasharray', '5 3')
+    .attr('opacity', 0.55);
+
+  // Main circle
+  nodeGroups.append('circle').attr('class', 'node-circle')
+    .attr('r', d => nodeRadius(d))
+    .attr('fill', d => nodeColor(d))
+    .attr('stroke', d => nodeStroke(d))
+    .attr('stroke-width', 1.5);
+
+  // Status dot
+  nodeGroups.append('circle').attr('class', 'status-dot')
+    .attr('r', 4.5)
+    .attr('cx', d =>  nodeRadius(d) * 0.65)
+    .attr('cy', d => -nodeRadius(d) * 0.65)
+    .attr('fill', d => {
+      if (d.status === 'adjacent') return '#7520DC';
+      if (d.status === 'active')   return '#22c55e';
+      return '#9a9590';
+    })
+    .attr('stroke', 'white').attr('stroke-width', 1.5);
+
+  // Labels
+  nodeGroups.append('text').attr('class', 'node-label')
+    .attr('text-anchor', 'middle')
+    .attr('font-family', "'Outfit', sans-serif")
+    .attr('font-size', d => d.size === 'large' ? 12 : 11)
+    .attr('font-weight', 600)
+    .attr('fill', '#252525')
+    .attr('paint-order', 'stroke')
+    .attr('stroke', '#FDF4E1')
+    .attr('stroke-width', '3px')
+    .attr('stroke-linejoin', 'round')
+    .each(function(d) {
+      const el = d3.select(this);
+      const r  = nodeRadius(d);
+      const words = d.name.split(' ');
+      const maxLen = 15;
+      let line1 = '', line2 = '';
+      for (const w of words) {
+        if ((line1 + ' ' + w).trim().length <= maxLen) line1 = (line1 + ' ' + w).trim();
+        else line2 = (line2 + ' ' + w).trim();
+      }
+      if (line2) {
+        el.text(null);
+        el.append('tspan').attr('x', 0).attr('dy', r + 14).text(line1);
+        el.append('tspan').attr('x', 0).attr('dy', '1.15em').text(line2);
+      } else {
+        el.attr('dy', r + 14).text(line1);
+      }
+    });
+
+  svg.on('click', () => deselectNode());
+  applyFilters();
+}
+
+// ── Pulse: 6-second outward expansion, calm ease, repeats every 3s after completion ──
+function stopPulse() {
+  pulseRunning = false;
+  pulseNodeId  = null;
+  if (pulseTimer) { clearTimeout(pulseTimer); pulseTimer = null; }
+  d3.selectAll('.pulse-ring').interrupt()
+    .attr('r', function(d) { return nodeRadius(d); })
+    .attr('opacity', 0);
+}
+
+function startPulseFor(d) {
+  stopPulse();
+  if (d.status !== 'active') return;
+  pulseRunning = true;
+  pulseNodeId  = d.id;
+  firePulse(d);
+}
+
+function firePulse(d) {
+  if (!pulseRunning || pulseNodeId !== d.id) return;
+  const ring = d3.selectAll('.node-group')
+    .filter(n => n.id === d.id)
+    .select('.pulse-ring');
+  if (ring.empty()) return;
+  const baseR = nodeRadius(d);
+  const color = nodeColor(d);
+
+  ring.interrupt()
+    .attr('r', baseR)
+    .attr('stroke', color)
+    .attr('stroke-width', 2.5)
+    .attr('opacity', 0.6)
+    .transition()
+      .duration(6000)               // 6-second slow expansion
+      .ease(d3.easeCubicOut)
+      .attr('r', baseR + 30)
+      .attr('opacity', 0)
+    .on('end', () => {
+      if (!pulseRunning || pulseNodeId !== d.id) return;
+      // 3-second rest, then fire again
+      pulseTimer = setTimeout(() => firePulse(d), 3000);
+    });
+}
+
+function selectNode(d) {
+  if (activeNode && activeNode.id === d.id) { deselectNode(); return; }
+  activeNode = d;
+  renderDetail(d);
+  updateDim();
+  startPulseFor(d);
+}
+
+function deselectNode() {
+  activeNode = null;
+  stopPulse();
+  renderDetail(null);
+  updateDim();
+}
+
+function applyFilters() { updateDim(); }
+
+function updateDim() {
+  d3.selectAll('.node-group').classed('dimmed', d => isFiltered(d));
+}
+
+function renderDetail(d) {
+  const panel = document.getElementById('detail-panel');
+  if (!d) { panel.innerHTML = '<div class="detail-empty">Click any program node to see details here.</div>'; return; }
+  const PL = { convey:'Conveying', convene:'Convening', cultivate:'Cultivating', advocacy:'Advocacy' };
+  const statusLabel = { active:'Active', dormant:'Dormant', adjacent:'Adjacent / Overlapping' }[d.status];
+  const statusClass = { active:'badge-active', dormant:'badge-dormant', adjacent:'badge-adjacent' }[d.status];
+  const pillarTags  = d.pillars.map(p => `<span class="pillar-tag pt-${p}">${PL[p]}</span>`).join('');
+  const parentProg  = d.parent ? PROGRAMS.find(p => p.id === d.parent) : null;
+  const parentHTML  = parentProg
+    ? `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--slate);margin-top:12px;margin-bottom:4px;">Part of</div><div style="font-size:13px;color:#3d3830;">${parentProg.name}</div>`
+    : '';
+  const adjNote = d.status === 'adjacent'
+    ? `<div style="font-size:12px;color:#5a2a8a;background:#ede5f8;border-radius:5px;padding:8px 10px;margin-bottom:12px;line-height:1.5;">Externally affiliated — operates in PATTERN's orbit but is not fully owned by the organization.</div>`
+    : '';
+  const noteHTML = d.note
+    ? `<div style="font-size:11px;color:#6b6560;background:#f0ece3;border-radius:4px;padding:3px 8px;display:inline-block;margin-bottom:12px;">${d.note}</div>`
+    : '';
+  const dualNote = d.dualZone
+    ? `<div style="font-size:12px;color:#3d3830;background:#e8e8f4;border-radius:5px;padding:8px 10px;margin-bottom:12px;line-height:1.5;">Spans both Conveying and Advocacy pillars — positioned between both clusters on the map.</div>`
+    : '';
+  panel.innerHTML = `
+    <div class="detail-name">${d.name}</div>
+    <div class="detail-badges">
+      <span class="badge ${statusClass}">${statusLabel}</span>
+      <span class="badge" style="background:#f0ece3;color:#6b6560;">${d.size.charAt(0).toUpperCase()+d.size.slice(1)}</span>
+    </div>
+    ${noteHTML}${adjNote}${dualNote}
+    <p class="detail-desc">${d.desc}</p>
+    <div class="detail-pillars-label">Strategic Pillars</div>
+    <div class="detail-pillar-tags">${pillarTags}</div>
+    ${parentHTML}
+  `;
+}
+
+document.getElementById('pillar-filter').addEventListener('change', e => { filterPillar = e.target.value; applyFilters(); });
+document.getElementById('status-filter').addEventListener('change', e => { filterStatus = e.target.value; applyFilters(); });
+document.getElementById('size-filter').addEventListener('change',   e => { filterSize   = e.target.value; applyFilters(); });
+document.getElementById('search-input').addEventListener('input',   e => { searchText   = e.target.value; applyFilters(); });
+document.getElementById('reset-btn').addEventListener('click', () => {
+  filterPillar = filterStatus = filterSize = 'all'; searchText = ''; deselectNode();
+  ['pillar-filter','status-filter','size-filter'].forEach(id => document.getElementById(id).value = 'all');
+  document.getElementById('search-input').value = '';
+  applyFilters();
+});
+
+window.addEventListener('resize', init);
+window.addEventListener('load', init);
+</script>
+</body>
+</html>

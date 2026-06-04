@@ -50,14 +50,18 @@
   .node-group.dimmed .node-label  { opacity: 0.08; }
   .node-group.dimmed .status-dot  { opacity: 0.1; }
   .node-group.dimmed .adj-ring    { opacity: 0.08; }
-  .sidebar { width: 300px; min-width: 260px; background: white; border-left: 1.5px solid #e8e2d4; display: flex; flex-direction: column; overflow-y: auto; }
+  .sidebar { width: 300px; min-width: 300px; background: white; border-left: 1.5px solid #e8e2d4; display: flex; flex-direction: column; overflow: hidden; transition: width 0.25s ease, min-width 0.25s ease; flex-shrink: 0; }
+  .sidebar.collapsed { width: 38px; min-width: 38px; }
+  .sidebar-toggle-btn { width: 100%; padding: 9px 11px; background: white; border: none; border-bottom: 1.5px solid #e8e2d4; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: var(--font-body); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate); white-space: nowrap; flex-shrink: 0; }
+  .sidebar-toggle-btn:hover { background: var(--cream); }
+  .sidebar-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 298px; }
   .legend-section { padding: 20px 20px 16px; border-bottom: 1.5px solid #e8e2d4; }
   .legend-title { font-family: var(--font-display); font-weight: 900; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); margin-bottom: 12px; }
   .legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; font-size: 13px; }
   .legend-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
   .legend-size-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .legend-size-label { font-size: 12px; color: #6b6560; }
-  .sz-large  { width: 22px; height: 22px; border-radius: 50%; background: #c5c0b8; }
+  .sz-large  { width: 28px; height: 28px; border-radius: 50%; background: #c5c0b8; }
   .sz-medium { width: 16px; height: 16px; border-radius: 50%; background: #c5c0b8; }
   .sz-small  { width: 10px; height: 10px; border-radius: 50%; background: #c5c0b8; }
   .detail-panel { flex: 1; padding: 20px; }
@@ -134,35 +138,34 @@
 
 <div class="main">
   <div id="canvas"><svg id="map-svg"></svg></div>
-  <aside class="sidebar">
-    <div class="legend-section">
-      <div class="legend-title">Pillars</div>
-      <div class="legend-row"><div class="legend-dot" style="background:var(--convey-color)"></div> Conveying</div>
-      <div class="legend-row"><div class="legend-dot" style="background:var(--convene-color)"></div> Convening</div>
-      <div class="legend-row"><div class="legend-dot" style="background:var(--cultivate-color)"></div> Cultivating</div>
-      <div class="legend-row"><div class="legend-dot" style="background:var(--advocacy-color)"></div> Advocacy</div>
-    </div>
-    <div class="legend-section">
-      <div class="legend-title">Status</div>
-      <div class="legend-row">
-        <div style="width:14px;height:14px;border-radius:50%;background:#3372F1;flex-shrink:0;box-shadow:0 0 0 4px rgba(51,114,241,0.2);"></div>
-        Active (pulses when selected)
+  <aside class="sidebar" id="sidebar">
+    <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Toggle legend">
+      <svg id="toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Legend</span>
+    </button>
+    <div class="sidebar-content">
+      <div class="detail-panel" id="detail-panel">
+        <div class="detail-empty">Click any program node to see details here.</div>
       </div>
-      <div class="legend-row"><div class="legend-dot" style="background:#b8b3ab"></div> Dormant</div>
-      <div class="legend-row">
-        <div style="width:14px;height:14px;border-radius:50%;background:#BA87ED;border:2px dashed #7520DC;flex-shrink:0;"></div>
-        Adjacent / overlapping
+      <div class="legend-section">
+        <div class="legend-title">Status</div>
+        <div class="legend-row">
+          <div style="width:14px;height:14px;border-radius:50%;background:#3372F1;flex-shrink:0;box-shadow:0 0 0 4px rgba(51,114,241,0.2);"></div>
+          Active (pulses when selected)
+        </div>
+        <div class="legend-row"><div class="legend-dot" style="background:#b8b3ab"></div> Dormant</div>
+        <div class="legend-row">
+          <div style="width:14px;height:14px;border-radius:50%;background:#BA87ED;border:2px dashed #7520DC;flex-shrink:0;"></div>
+          Adjacent / overlapping
+        </div>
+        <div style="font-size:11px;color:#8a8480;line-height:1.5;margin-top:6px;padding-left:24px;">Dashed ring = not fully PATTERN-owned. Lines connect parent programs to sub-initiatives.</div>
       </div>
-      <div style="font-size:11px;color:#8a8480;line-height:1.5;margin-top:6px;padding-left:24px;">Dashed ring = not fully PATTERN-owned. Lines connect parent programs to sub-initiatives.</div>
-    </div>
-    <div class="legend-section">
-      <div class="legend-title">Program Weight</div>
-      <div class="legend-size-wrap"><div class="sz-large"></div><span class="legend-size-label">Large</span></div>
-      <div class="legend-size-wrap"><div class="sz-medium"></div><span class="legend-size-label">Medium</span></div>
-      <div class="legend-size-wrap"><div class="sz-small"></div><span class="legend-size-label">Small</span></div>
-    </div>
-    <div class="detail-panel" id="detail-panel">
-      <div class="detail-empty">Click any program node to see details here.</div>
+      <div class="legend-section">
+        <div class="legend-title">Program Weight</div>
+        <div class="legend-size-wrap"><div class="sz-large"></div><span class="legend-size-label">Large</span></div>
+        <div class="legend-size-wrap"><div class="sz-medium"></div><span class="legend-size-label">Medium</span></div>
+        <div class="legend-size-wrap"><div class="sz-small"></div><span class="legend-size-label">Small</span></div>
+      </div>
     </div>
   </aside>
 </div>
@@ -174,7 +177,7 @@ const PILLAR_COLORS = {
   cultivate: '#F74135',
   advocacy:  '#7520DC',
 };
-const NODE_RADII = { large: 38, medium: 26, small: 16 };
+const NODE_RADII = { large: 48, medium: 22, small: 14 };
 
 // primary_pillar drives cluster placement.
 // For dual-pillar nodes (e.g. CE Playbook: convey+advocacy),
@@ -225,9 +228,8 @@ const PROGRAMS = [
 
   { id:'wesleys-project',
     name:"Wesley's Project",
-    size:'medium', status:'active', pillars:['convey'], primary_pillar:'convey',
-    note:'Details TBD — listed in the Conveying pillar of the program brief.',
-    desc:'A conveying initiative attributed to Wesley. Specific scope is still being defined — listed as an active Conveying program in the organizational brief.' },
+    size:'medium', status:'active', pillars:['advocacy'], primary_pillar:'advocacy',
+    desc:"An active advocacy initiative. Specific scope is still being defined — positioned within PATTERN's Advocacy cluster." },
 
   // CE Playbook spans Conveying + Advocacy; primary set to 'convey'
   // but we'll apply a custom anchor midpoint in the force layout
@@ -281,11 +283,6 @@ const PROGRAMS = [
     name:'Stitchworks',
     size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
     desc:'Active program within PATTERN\'s cultivating work — focused on a specific creative sector niche within the broader talent and ecosystem development mission.' },
-
-  { id:'ongoing-grants',
-    name:'Ongoing Grants',
-    size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
-    desc:'Active grant funding that supports PATTERN\'s cultivating work — enabling talent development, creative business support, and workforce ecosystem programs.' },
 
   // ── ADVOCACY ───────────────────────────────────────────────
   { id:'cela',
@@ -625,6 +622,14 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   ['pillar-filter','status-filter','size-filter'].forEach(id => document.getElementById(id).value = 'all');
   document.getElementById('search-input').value = '';
   applyFilters();
+});
+
+document.getElementById('sidebar-toggle').addEventListener('click', () => {
+  const sidebar = document.getElementById('sidebar');
+  const collapsed = sidebar.classList.toggle('collapsed');
+  document.getElementById('toggle-icon').querySelector('path')
+    .setAttribute('d', collapsed ? 'M9 18l6-6-6-6' : 'M15 18l-6-6 6-6');
+  setTimeout(init, 270);
 });
 
 window.addEventListener('resize', init);

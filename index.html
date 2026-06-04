@@ -41,7 +41,7 @@
   .divider { width: 1px; height: 28px; background: #d4cfc5; }
   .reset-btn { font-family: var(--font-body); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border: 1.5px solid var(--near-black); border-radius: 6px; padding: 7px 14px; background: transparent; color: var(--near-black); cursor: pointer; transition: all 0.15s; }
   .reset-btn:hover { background: var(--near-black); color: var(--cream); }
-  .main { display: flex; height: calc(100vh - 130px); min-height: 600px; }
+  .main { display: flex; height: calc(100vh - 130px); min-height: 600px; position: relative; }
   #canvas { flex: 1; position: relative; overflow: hidden; }
   #canvas svg { width: 100%; height: 100%; }
   .node-group { cursor: pointer; }
@@ -51,7 +51,7 @@
   .node-group.dimmed .status-dot  { opacity: 0.1; }
   .node-group.dimmed .adj-ring    { opacity: 0.08; }
   .sidebar { width: 300px; min-width: 300px; background: white; border-left: 1.5px solid #e8e2d4; display: flex; flex-direction: column; overflow: hidden; transition: width 0.25s ease, min-width 0.25s ease; flex-shrink: 0; }
-  .sidebar.collapsed { width: 38px; min-width: 38px; }
+  .sidebar.collapsed { width: 0; min-width: 0; }
   .sidebar-toggle-btn { width: 100%; padding: 9px 11px; background: white; border: none; border-bottom: 1.5px solid #e8e2d4; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: var(--font-body); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate); white-space: nowrap; flex-shrink: 0; }
   .sidebar-toggle-btn:hover { background: var(--cream); }
   .sidebar-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 298px; }
@@ -64,7 +64,9 @@
   .sz-large  { width: 28px; height: 28px; border-radius: 50%; background: #c5c0b8; }
   .sz-medium { width: 16px; height: 16px; border-radius: 50%; background: #c5c0b8; }
   .sz-small  { width: 10px; height: 10px; border-radius: 50%; background: #c5c0b8; }
-  .detail-panel { flex: 1; padding: 20px; }
+  .detail-panel { flex: 0 0 auto; padding: 20px; }
+  .sidebar-reopen-tab { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 22px; height: 60px; background: var(--near-black); border: none; border-radius: 8px 0 0 8px; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 20; color: var(--cream); padding: 0; box-shadow: -2px 0 8px rgba(0,0,0,0.18); }
+  .sidebar-reopen-tab:hover { background: #3d3d3d; }
   .detail-empty { font-size: 13px; color: #a09a92; font-style: italic; line-height: 1.6; padding-top: 8px; }
   .detail-name { font-family: var(--font-display); font-weight: 900; font-size: 22px; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.1; margin-bottom: 10px; }
   .detail-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
@@ -138,6 +140,9 @@
 
 <div class="main">
   <div id="canvas"><svg id="map-svg"></svg></div>
+  <button class="sidebar-reopen-tab" id="sidebar-tab" title="Open legend" aria-label="Open legend">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
   <aside class="sidebar" id="sidebar">
     <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Toggle legend">
       <svg id="toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -236,7 +241,7 @@ const PROGRAMS = [
   { id:'ce-playbook',
     name:'Creative Economy Playbook / Network',
     size:'large', status:'dormant', pillars:['convey','advocacy'], primary_pillar:'convey',
-    dualZone: true,
+    dualZone: true, splitColors: ['#3372F1','#7520DC'],
     desc:'A resource and network initiative spanning both Conveying and Advocacy. Currently dormant — represents a significant future reactivation opportunity across both functions.' },
 
   // Client work — functional fit is Conveying; flagged as client work
@@ -257,6 +262,13 @@ const PROGRAMS = [
     size:'medium', status:'active', pillars:['convey'], primary_pillar:'convey',
     note:'Client work',
     desc:'Ongoing client-facing work beyond named anchor clients. Contributes to PATTERN\'s revenue and the conveying function.' },
+
+  // ── ALUMNI (between Convening + Cultivating) ───────────────
+  { id:'alumni',
+    name:'Alumni',
+    size:'medium', status:'active', pillars:['convene','cultivate'], primary_pillar:'alumni',
+    splitColors: ['#FFC702','#F74135'],
+    desc:'Alumni programming that bridges PATTERN\'s Convening and Cultivating pillars — connecting past fellows, interns, and event participants to the ongoing creative economy ecosystem.' },
 
   // ── CULTIVATING ────────────────────────────────────────────
   { id:'intern-program',
@@ -327,11 +339,13 @@ function getW() { return canvasEl.clientWidth; }
 function getH() { return canvasEl.clientHeight; }
 
 function nodeColor(d) {
+  if (d.splitColors) return `url(#grad-${d.id})`;
   if (d.status === 'dormant')  return '#b8b3ab';
   if (d.status === 'adjacent') return '#BA87ED';
   return PILLAR_COLORS[d.primary_pillar] || '#888';
 }
 function nodeStroke(d) {
+  if (d.splitColors)           return 'rgba(0,0,0,0.18)';
   if (d.status === 'adjacent') return '#7520DC';
   if (d.status === 'dormant')  return '#9a9590';
   return 'rgba(0,0,0,0.18)';
@@ -353,7 +367,7 @@ function getAnchors(W, H, labelFontSize) {
   const usableBottom = H - bottomPad;
   const quarterY = usableTop + (usableBottom - usableTop) * 0.28;
   const threeQY  = usableTop + (usableBottom - usableTop) * 0.72;
-  // midpoint zone for dual-pillar nodes (convey+advocacy = left-center vertical midpoint)
+  // midpoint zone for dual-pillar nodes
   const midY = (quarterY + threeQY) / 2;
   return {
     convey:    { fx: 0.21, fy: quarterY / H },
@@ -361,6 +375,7 @@ function getAnchors(W, H, labelFontSize) {
     cultivate: { fx: 0.74, fy: threeQY  / H },
     advocacy:  { fx: 0.21, fy: threeQY  / H },
     dual_convey_advocacy: { fx: 0.10, fy: midY / H },
+    alumni:    { fx: 0.74, fy: midY    / H },   // right-center, between convene + cultivate
   };
 }
 
@@ -368,6 +383,17 @@ function init() {
   const W = getW(), H = getH();
   svg.selectAll('*').remove();
   stopPulse();
+
+  // Define split-color gradients for nodes that need them
+  const defs = svg.append('defs');
+  PROGRAMS.filter(d => d.splitColors).forEach(d => {
+    const grad = defs.append('linearGradient')
+      .attr('id', `grad-${d.id}`)
+      .attr('x1', '0%').attr('y1', '0%')
+      .attr('x2', '100%').attr('y2', '0%');
+    grad.append('stop').attr('offset', '50%').attr('stop-color', d.splitColors[0]);
+    grad.append('stop').attr('offset', '50%').attr('stop-color', d.splitColors[1]);
+  });
 
   const labelFontSize = Math.min(W * 0.062, 60);
   const PILLAR_ANCHORS = getAnchors(W, H, labelFontSize);
@@ -626,9 +652,17 @@ document.getElementById('reset-btn').addEventListener('click', () => {
 
 document.getElementById('sidebar-toggle').addEventListener('click', () => {
   const sidebar = document.getElementById('sidebar');
+  const tab     = document.getElementById('sidebar-tab');
   const collapsed = sidebar.classList.toggle('collapsed');
-  document.getElementById('toggle-icon').querySelector('path')
-    .setAttribute('d', collapsed ? 'M9 18l6-6-6-6' : 'M15 18l-6-6 6-6');
+  tab.style.display = collapsed ? 'flex' : 'none';
+  setTimeout(init, 270);
+});
+
+document.getElementById('sidebar-tab').addEventListener('click', () => {
+  const sidebar = document.getElementById('sidebar');
+  const tab     = document.getElementById('sidebar-tab');
+  sidebar.classList.remove('collapsed');
+  tab.style.display = 'none';
   setTimeout(init, 270);
 });
 

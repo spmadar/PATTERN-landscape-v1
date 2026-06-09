@@ -81,7 +81,7 @@
   .badge-type-grant    { background: #FFC702; color: #252525; }
   .badge-incub         { background: #BA87ED; color: #252525; }
   .detail-desc { font-size: 13px; line-height: 1.65; color: #3d3830; margin-bottom: 14px; }
-  .detail-pillars-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--slate); margin-bottom: 6px; }
+  .detail-pillars-label { font-family: 'FK Screamer', var(--font-display), sans-serif; font-weight: 900; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); margin-bottom: 6px; }
   .detail-pillar-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
   .pillar-tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 9px; border-radius: 4px; color: white; }
   .pt-convey    { background: var(--convey-color); }
@@ -159,6 +159,18 @@
         <div class="detail-empty">Click any program node to see details here.</div>
       </div>
       <div class="legend-section">
+        <div class="legend-title">Program Type</div>
+        <div class="legend-row"><span class="badge badge-type-agency" style="font-size:11px;padding:2px 8px;margin-right:2px;">C</span> Agency / Client</div>
+        <div class="legend-row"><span class="badge badge-type-grant"  style="font-size:11px;padding:2px 8px;margin-right:2px;">$</span> Grant-Funded</div>
+        <div class="legend-row"><span class="badge badge-incub"       style="font-size:11px;padding:2px 8px;margin-right:2px;">◆</span> Incubating</div>
+      </div>
+      <div class="legend-section">
+        <div class="legend-title">Program Weight</div>
+        <div class="legend-size-wrap"><div class="sz-large"></div><span class="legend-size-label">Large</span></div>
+        <div class="legend-size-wrap"><div class="sz-medium"></div><span class="legend-size-label">Medium</span></div>
+        <div class="legend-size-wrap"><div class="sz-small"></div><span class="legend-size-label">Small</span></div>
+      </div>
+      <div class="legend-section">
         <div class="legend-title">Status</div>
         <div class="legend-row">
           <div style="width:14px;height:14px;border-radius:50%;background:#3372F1;flex-shrink:0;box-shadow:0 0 0 4px rgba(51,114,241,0.2);"></div>
@@ -170,18 +182,6 @@
           Adjacent / overlapping
         </div>
         <div style="font-size:11px;color:#8a8480;line-height:1.5;margin-top:6px;padding-left:24px;">Dashed ring = not fully PATTERN-owned. Lines connect parent programs to sub-initiatives.</div>
-      </div>
-      <div class="legend-section">
-        <div class="legend-title">Program Weight</div>
-        <div class="legend-size-wrap"><div class="sz-large"></div><span class="legend-size-label">Large</span></div>
-        <div class="legend-size-wrap"><div class="sz-medium"></div><span class="legend-size-label">Medium</span></div>
-        <div class="legend-size-wrap"><div class="sz-small"></div><span class="legend-size-label">Small</span></div>
-      </div>
-      <div class="legend-section">
-        <div class="legend-title">Program Type</div>
-        <div class="legend-row"><span class="badge badge-type-agency" style="font-size:11px;padding:2px 8px;margin-right:2px;">C</span> Agency / Client</div>
-        <div class="legend-row"><span class="badge badge-type-grant"  style="font-size:11px;padding:2px 8px;margin-right:2px;">$</span> Grant-Funded</div>
-        <div class="legend-row"><span class="badge badge-incub"       style="font-size:11px;padding:2px 8px;margin-right:2px;">◆</span> Incubating</div>
       </div>
     </div>
   </aside>
@@ -214,7 +214,7 @@ const PROGRAMS = [
   // ── CONVENING ──────────────────────────────────────────────
   { id:'summit',
     name:'Annual Creative Economy Summit',
-    size:'large', status:'active', pillars:['convey','convene','cultivate','advocacy'], primary_pillar:'convene',
+    size:'large', status:'active', pillars:['convene','cultivate','advocacy','convey'], primary_pillar:'convene',
     allPillars: true,
     desc:'PATTERN\'s flagship convening event. Brings together Indiana\'s creative sector annually for cross-sector dialogue, connection, and advocacy. The highest-weight convening program and our signature event.' },
 
@@ -591,7 +591,7 @@ function init() {
   nodeGroups.append('text').attr('class', 'node-label')
     .attr('text-anchor', 'middle')
     .attr('font-family', "'Outfit', sans-serif")
-    .attr('font-size', d => d.size === 'large' ? 17 : 15)
+    .attr('font-size', d => d.size === 'large' ? 20 : 17)
     .attr('font-weight', 600)
     .attr('fill', '#252525')
     .attr('paint-order', 'stroke')
@@ -634,6 +634,7 @@ function stopPulse() {
 function startPulseFor(d) {
   stopPulse();
   if (d.status !== 'active') return;
+  d._pulseIdx = 0;
   pulseRunning = true;
   pulseNodeId  = d.id;
   firePulse(d);
@@ -646,22 +647,26 @@ function firePulse(d) {
     .select('.pulse-ring');
   if (ring.empty()) return;
   const baseR = nodeRadius(d);
-  const color = nodeColor(d);
+
+  // Cycle through all pillar colors for multi-pillar nodes
+  const activePillars = (d.pillars || []).filter(p => PILLAR_COLORS[p]);
+  const colors = activePillars.length > 1 ? activePillars.map(p => PILLAR_COLORS[p]) : [nodeColor(d)];
+  const color = colors[(d._pulseIdx || 0) % colors.length];
+  d._pulseIdx = (d._pulseIdx || 0) + 1;
 
   ring.interrupt()
     .attr('r', baseR)
     .attr('stroke', color)
     .attr('stroke-width', 2.5)
-    .attr('opacity', 0.6)
+    .attr('opacity', 0.65)
     .transition()
-      .duration(6000)               // 6-second slow expansion
+      .duration(2500)
       .ease(d3.easeCubicOut)
       .attr('r', baseR + 30)
       .attr('opacity', 0)
     .on('end', () => {
       if (!pulseRunning || pulseNodeId !== d.id) return;
-      // 3-second rest, then fire again
-      pulseTimer = setTimeout(() => firePulse(d), 3000);
+      pulseTimer = setTimeout(() => firePulse(d), 600);
     });
 }
 
@@ -719,9 +724,7 @@ function renderDetail(d) {
   const noteHTML = d.note
     ? `<div style="font-size:11px;color:#6b6560;background:#f0ece3;border-radius:4px;padding:3px 8px;display:inline-block;margin-bottom:12px;">${d.note}</div>`
     : '';
-  const dualNote = d.dualZone
-    ? `<div style="font-size:12px;color:#3d3830;background:#e8e8f4;border-radius:5px;padding:8px 10px;margin-bottom:12px;line-height:1.5;">Spans both Conveying and Advocacy pillars — positioned between both clusters on the map.</div>`
-    : '';
+  const dualNote = '';
   panel.innerHTML = `
     <div class="detail-name">${d.name}</div>
     <div class="detail-badges">

@@ -79,6 +79,14 @@
   .badge-type-agency   { background: #252525; color: #FDF4E1; }
   .badge-type-grant    { background: #FFC702; color: #252525; }
   .badge-incub         { background: #BA87ED; color: #252525; }
+  .badge-external      { background: #f0ece3; color: #6b6560; border: 1px solid #d6d0c4; }
+  .badge.badge-type-agency,
+  .badge.badge-type-grant {
+    width: 22px; height: 22px; min-width: 22px;
+    padding: 0; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; line-height: 1;
+  }
   .detail-desc { font-size: 13px; line-height: 1.65; color: #3d3830; margin-bottom: 14px; }
   .detail-pillars-label { font-family: 'FK Screamer', var(--font-display), sans-serif; font-weight: 900; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); margin-bottom: 6px; }
   .detail-pillar-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
@@ -158,8 +166,8 @@
       </div>
       <div class="legend-section">
         <div class="legend-title">Program Type</div>
-        <div class="legend-row"><span class="badge badge-type-agency" style="font-size:11px;padding:2px 8px;margin-right:2px;">C</span> Agency / Client</div>
-        <div class="legend-row"><span class="badge badge-type-grant"  style="font-size:11px;padding:2px 8px;margin-right:2px;">$</span> Grant-Funded</div>
+        <div class="legend-row"><span class="badge badge-type-agency" style="margin-right:6px;">C</span> Agency / Client</div>
+        <div class="legend-row"><span class="badge badge-type-grant"  style="margin-right:6px;">$</span> Grant-Funded</div>
         <div class="legend-row"><span class="badge badge-incub"       style="font-size:11px;padding:2px 8px;margin-right:2px;">◆</span> Incubating</div>
       </div>
       <div class="legend-section">
@@ -415,17 +423,17 @@ function getAnchors(W, H, labelFontSize) {
   const bottomPad = labelFontSize + 28;
   const usableTop    = topPad;
   const usableBottom = H - bottomPad;
-  const quarterY = usableTop + (usableBottom - usableTop) * 0.28;
-  const threeQY  = usableTop + (usableBottom - usableTop) * 0.72;
+  const quarterY = usableTop + (usableBottom - usableTop) * 0.38;
+  const threeQY  = usableTop + (usableBottom - usableTop) * 0.62;
   // midpoint zone for dual-pillar nodes
   const midY = (quarterY + threeQY) / 2;
   return {
-    convey:    { fx: 0.21, fy: quarterY / H },
-    convene:   { fx: 0.74, fy: quarterY / H },
-    cultivate: { fx: 0.74, fy: threeQY  / H },
-    advocacy:  { fx: 0.21, fy: threeQY  / H },
-    dual_convey_advocacy: { fx: 0.10, fy: midY / H },
-    alumni:    { fx: 0.74, fy: midY    / H },   // right-center, between convene + cultivate
+    convey:    { fx: 0.33, fy: quarterY / H },
+    convene:   { fx: 0.67, fy: quarterY / H },
+    cultivate: { fx: 0.67, fy: threeQY  / H },
+    advocacy:  { fx: 0.33, fy: threeQY  / H },
+    dual_convey_advocacy: { fx: 0.22, fy: midY / H },
+    alumni:    { fx: 0.67, fy: midY    / H },   // right-center, between convene + cultivate
     allPillars:{ fx: 0.50, fy: 0.50 },           // canvas center for programs spanning all 4
   };
 }
@@ -735,14 +743,13 @@ function renderDetail(d) {
   const statusClass = { active:'badge-active', dormant:'badge-dormant', adjacent:'badge-adjacent' }[d.status];
   const pillarTags  = d.pillars.filter(p => PL[p]).map(p => `<span class="pillar-tag pt-${p}">${PL[p]}</span>`).join('');
   const typeMap = { agency:'Agency / Client', grant:'Grant-Funded' };
-  const typeBadge = d.type ? `<span class="badge badge-type-${d.type}">${typeMap[d.type]}</span>` : '';
+  const typeGlyph = { agency:'C', grant:'$' };
+  const typeBadge = d.type ? `<span class="badge badge-type-${d.type}" title="${typeMap[d.type]}">${typeGlyph[d.type]}</span>` : '';
   const incubBadge = d.incubatory ? `<span class="badge badge-incub">Incubating</span>` : '';
+  const externalBadge = d.status === 'adjacent' ? `<span class="badge badge-external">External</span>` : '';
   const parentProg  = d.parent ? PROGRAMS.find(p => p.id === d.parent) : null;
   const parentHTML  = parentProg
     ? `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--slate);margin-top:12px;margin-bottom:4px;">Part of</div><div style="font-size:13px;color:#3d3830;">${parentProg.name}</div>`
-    : '';
-  const adjNote = d.status === 'adjacent'
-    ? `<div style="font-size:12px;color:#5a2a8a;background:#ede5f8;border-radius:5px;padding:8px 10px;margin-bottom:12px;line-height:1.5;">Externally affiliated — operates in PATTERN's orbit but is not fully owned by the organization.</div>`
     : '';
   const noteHTML = d.note
     ? `<div style="font-size:11px;color:#6b6560;background:#f0ece3;border-radius:4px;padding:3px 8px;display:inline-block;margin-bottom:12px;">${d.note}</div>`
@@ -753,9 +760,9 @@ function renderDetail(d) {
     <div class="detail-badges">
       <span class="badge ${statusClass}">${statusLabel}</span>
       <span class="badge" style="background:#f0ece3;color:#6b6560;">${d.size.charAt(0).toUpperCase()+d.size.slice(1)}</span>
-      ${typeBadge}${incubBadge}
+      ${externalBadge}${typeBadge}${incubBadge}
     </div>
-    ${noteHTML}${adjNote}${dualNote}
+    ${noteHTML}${dualNote}
     <p class="detail-desc">${d.desc}</p>
     <div class="detail-pillars-label">Strategic Pillars</div>
     <div class="detail-pillar-tags">${pillarTags}</div>

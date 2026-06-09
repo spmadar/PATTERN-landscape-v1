@@ -50,13 +50,15 @@
   .node-group.dimmed .node-label  { opacity: 0.08; }
   .node-group.dimmed .status-dot  { opacity: 0.1; }
   .node-group.dimmed .adj-ring    { opacity: 0.08; }
+  .node-group.dimmed .badge-icon  { opacity: 0.08; }
+  .node-group.dimmed .badge-dot   { opacity: 0.1; }
   .sidebar { width: 300px; min-width: 300px; background: white; border-left: 1.5px solid #e8e2d4; display: flex; flex-direction: column; overflow: hidden; transition: width 0.25s ease, min-width 0.25s ease; flex-shrink: 0; }
   .sidebar.collapsed { width: 0; min-width: 0; }
   .sidebar-toggle-btn { width: 100%; padding: 9px 11px; background: white; border: none; border-bottom: 1.5px solid #e8e2d4; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: var(--font-body); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate); white-space: nowrap; flex-shrink: 0; }
   .sidebar-toggle-btn:hover { background: var(--cream); }
   .sidebar-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 298px; }
   .sidebar-content.pillar-mode .legend-section { display: none; }
-  .legend-section { padding: 20px 20px 16px; border-bottom: 1.5px solid #e8e2d4; }
+  .legend-section { padding: 5px 20px 16px; border-bottom: 1.5px solid #e8e2d4; }
   .legend-title { font-family: var(--font-display); font-weight: 900; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); margin-bottom: 12px; }
   .legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; font-size: 13px; }
   .legend-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
@@ -72,9 +74,12 @@
   .detail-name { font-family: var(--font-display); font-weight: 900; font-size: 22px; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.1; margin-bottom: 10px; }
   .detail-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
   .badge { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 9px; border-radius: 4px; }
-  .badge-active   { background: #d4edda; color: #1a6630; }
-  .badge-dormant  { background: #e8e2d4; color: #6b6560; }
-  .badge-adjacent { background: #ede5f8; color: #4a2090; }
+  .badge-active        { background: #d4edda; color: #1a6630; }
+  .badge-dormant       { background: #e8e2d4; color: #6b6560; }
+  .badge-adjacent      { background: #ede5f8; color: #4a2090; }
+  .badge-type-agency   { background: #252525; color: #FDF4E1; }
+  .badge-type-grant    { background: #FFC702; color: #252525; }
+  .badge-incub         { background: #BA87ED; color: #252525; }
   .detail-desc { font-size: 13px; line-height: 1.65; color: #3d3830; margin-bottom: 14px; }
   .detail-pillars-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--slate); margin-bottom: 6px; }
   .detail-pillar-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
@@ -172,6 +177,12 @@
         <div class="legend-size-wrap"><div class="sz-medium"></div><span class="legend-size-label">Medium</span></div>
         <div class="legend-size-wrap"><div class="sz-small"></div><span class="legend-size-label">Small</span></div>
       </div>
+      <div class="legend-section">
+        <div class="legend-title">Program Type</div>
+        <div class="legend-row"><span class="badge badge-type-agency" style="font-size:11px;padding:2px 8px;margin-right:2px;">C</span> Agency / Client</div>
+        <div class="legend-row"><span class="badge badge-type-grant"  style="font-size:11px;padding:2px 8px;margin-right:2px;">$</span> Grant-Funded</div>
+        <div class="legend-row"><span class="badge badge-incub"       style="font-size:11px;padding:2px 8px;margin-right:2px;">◆</span> Incubating</div>
+      </div>
     </div>
   </aside>
 </div>
@@ -203,12 +214,14 @@ const PROGRAMS = [
   // ── CONVENING ──────────────────────────────────────────────
   { id:'summit',
     name:'Annual Creative Economy Summit',
-    size:'large', status:'active', pillars:['convene'], primary_pillar:'convene',
+    size:'large', status:'active', pillars:['convey','convene','cultivate','advocacy'], primary_pillar:'convene',
+    allPillars: true,
     desc:'PATTERN\'s flagship convening event. Brings together Indiana\'s creative sector annually for cross-sector dialogue, connection, and advocacy. The highest-weight convening program and our signature event.' },
 
   { id:'stutz',
     name:'Stutz Events & Social',
     size:'medium', status:'active', pillars:['convene'], primary_pillar:'convene',
+    type:'agency',
     desc:'Events and social media programming tied to the Stutz, a landmark creative hub in Indianapolis. Convenes creative community around a shared physical and digital space.' },
 
   { id:'ksm-panel',
@@ -244,7 +257,7 @@ const PROGRAMS = [
 
   { id:'wesleys-project',
     name:"Wesley's Project",
-    size:'medium', status:'active', pillars:['advocacy'], primary_pillar:'advocacy',
+    size:'small', status:'active', pillars:['advocacy'], primary_pillar:'advocacy',
     desc:"A data-driven initiative illuminating the impact of the creative economy. Provides comprehensive data analysis tools and transforms raw data into compelling, accessible reports that help communities." },
 
   // CE Playbook spans Conveying + Advocacy; primary set to 'convey'
@@ -252,59 +265,62 @@ const PROGRAMS = [
   { id:'ce-playbook',
     name:'Creative Economy Playbook / Network',
     size:'large', status:'dormant', pillars:['convey','advocacy'], primary_pillar:'convey',
-    dualZone: true, splitColors: ['#3372F1','#7520DC'],
+    dualZone: true,
     desc:'A resource and network initiative spanning both Conveying and Advocacy. Currently dormant.' },
 
   // Client work — functional fit is Conveying; flagged as client work
   { id:'iedc-yearbook',
     name:'IEDC Yearbook',
     size:'medium', status:'active', pillars:['convey'], primary_pillar:'convey',
-    note:'Client work',
+    type:'agency',
     desc:'Client work produced for the Indiana Economic Development Corporation. An annual magazine that features 100 small businesses and some ecosystems; relays a portion of the state\'s economic development narrative.' },
 
   { id:'iu-innovates',
     name:'IU Innovates',
     size:'medium', status:'active', pillars:['convey'], primary_pillar:'convey',
-    note:'Client work',
+    type:'agency',
     desc:'Client project with Indiana University, communicating innovation stories. Part of the active client work portfolio.' },
 
   { id:'other-client',
     name:'Other Client Projects',
     size:'medium', status:'active', pillars:['convey'], primary_pillar:'convey',
-    note:'Client work',
+    type:'agency',
     desc:'Ongoing client-facing work beyond named anchor clients.' },
 
   // ── ALUMNI (between Convening + Cultivating) ───────────────
   { id:'alumni',
     name:'Alumni',
     size:'medium', status:'active', pillars:['convene','cultivate'], primary_pillar:'alumni',
-    splitColors: ['#FFC702','#F74135'],
     desc:'Alumni programming that bridges PATTERN\'s Convening and Cultivating pillars — connecting past fellows, interns, and event participants to the ongoing creative economy ecosystem.' },
 
   // ── CULTIVATING ────────────────────────────────────────────
   { id:'intern-program',
     name:'Intern Program',
     size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
+    type:'grant',
     desc:'PATTERN\'s internship pipeline for emerging creative talent in Indiana. Active and focused on workforce development, meaningful mentorship, and hands-on learning.' },
 
   { id:'fellowship',
     name:'Fellowship Program',
     size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
+    type:'grant',
     desc:'A deeper talent investment. Fellows receive extended engagement with PATTERN\'s mission and work.' },
 
   { id:'space-residency',
     name:'S.P.A.C.E. Residency',
     size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
+    type:'grant', incubatory: true,
     desc:'A residency program supporting creative practitioners with space, community, and resources to develop their practice.' },
 
   { id:'createway',
     name:'CreateWay Speakers Bureau',
     size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
+    type:'grant',
     desc:'A speakers bureau connecting creative professionals with audiences across Indiana. Supports ecosystem-building and practitioner visibility.' },
 
   { id:'stitchworks',
     name:'Stitchworks',
-    size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
+    size:'medium', status:'active', pillars:['cultivate','convene'], primary_pillar:'cultivate',
     desc:'Active program within PATTERN\'s cultivating work; focused on a specific creative sector niche centered around sewing, and within the broader talent and ecosystem development mission.' },
 
   // ── ADVOCACY ───────────────────────────────────────────────
@@ -316,6 +332,7 @@ const PROGRAMS = [
   { id:'indiana-music',
     name:'Indiana Music Alliance',
     size:'medium', status:'adjacent', pillars:['advocacy'], primary_pillar:'advocacy',
+    incubatory: true,
     desc:'An adjacent organization advancing Indiana\'s music sector. PATTERN supports through panel programming and presence. Parent organization of IMA Panels.' },
 
   { id:'ima-panels',
@@ -350,13 +367,14 @@ function getW() { return canvasEl.clientWidth; }
 function getH() { return canvasEl.clientHeight; }
 
 function nodeColor(d) {
-  if (d.splitColors) return `url(#grad-${d.id})`;
+  // For multi-pillar nodes return first pillar color (used for pulse ring only)
+  const active = (d.pillars || []).filter(p => PILLAR_COLORS[p]);
+  if (active.length > 1) return PILLAR_COLORS[active[0]];
   if (d.status === 'dormant')  return '#b8b3ab';
   if (d.status === 'adjacent') return '#BA87ED';
   return PILLAR_COLORS[d.primary_pillar] || '#888';
 }
 function nodeStroke(d) {
-  if (d.splitColors)           return 'rgba(0,0,0,0.18)';
   if (d.status === 'adjacent') return '#7520DC';
   if (d.status === 'dormant')  return '#9a9590';
   return 'rgba(0,0,0,0.18)';
@@ -387,24 +405,27 @@ function getAnchors(W, H, labelFontSize) {
     advocacy:  { fx: 0.21, fy: threeQY  / H },
     dual_convey_advocacy: { fx: 0.10, fy: midY / H },
     alumni:    { fx: 0.74, fy: midY    / H },   // right-center, between convene + cultivate
+    allPillars:{ fx: 0.50, fy: 0.50 },           // canvas center for programs spanning all 4
   };
+}
+
+function anchorKey(d) {
+  if (d.allPillars) return 'allPillars';
+  if (d.dualZone)   return 'dual_convey_advocacy';
+  return d.primary_pillar;
+}
+
+function wedgePathD(r, a1, a2) {
+  const x1 = r * Math.cos(a1), y1 = r * Math.sin(a1);
+  const x2 = r * Math.cos(a2), y2 = r * Math.sin(a2);
+  const large = (a2 - a1 > Math.PI) ? 1 : 0;
+  return `M0,0L${x1},${y1}A${r},${r},0,${large},1,${x2},${y2}Z`;
 }
 
 function init() {
   const W = getW(), H = getH();
   svg.selectAll('*').remove();
   stopPulse();
-
-  // Define split-color gradients for nodes that need them
-  const defs = svg.append('defs');
-  PROGRAMS.filter(d => d.splitColors).forEach(d => {
-    const grad = defs.append('linearGradient')
-      .attr('id', `grad-${d.id}`)
-      .attr('x1', '0%').attr('y1', '0%')
-      .attr('x2', '100%').attr('y2', '0%');
-    grad.append('stop').attr('offset', '50%').attr('stop-color', d.splitColors[0]);
-    grad.append('stop').attr('offset', '50%').attr('stop-color', d.splitColors[1]);
-  });
 
   const labelFontSize = Math.min(W * 0.062, 60);
   const PILLAR_ANCHORS = getAnchors(W, H, labelFontSize);
@@ -437,8 +458,7 @@ function init() {
   });
 
   nodes = PROGRAMS.map(d => {
-    const anchorKey = d.dualZone ? 'dual_convey_advocacy' : d.primary_pillar;
-    const anchor = PILLAR_ANCHORS[anchorKey];
+    const anchor = PILLAR_ANCHORS[anchorKey(d)];
     const jitter = (Math.random() - 0.5) * 60;
     return { ...d, x: anchor.fx * W + jitter, y: anchor.fy * H + jitter };
   });
@@ -454,14 +474,8 @@ function init() {
     .attr('stroke-dasharray', '4 3').attr('opacity', 0.45);
 
   simulation = d3.forceSimulation(nodes)
-    .force('x', d3.forceX(d => {
-      const key = d.dualZone ? 'dual_convey_advocacy' : d.primary_pillar;
-      return PILLAR_ANCHORS[key].fx * W;
-    }).strength(0.24))
-    .force('y', d3.forceY(d => {
-      const key = d.dualZone ? 'dual_convey_advocacy' : d.primary_pillar;
-      return PILLAR_ANCHORS[key].fy * H;
-    }).strength(0.24))
+    .force('x', d3.forceX(d => PILLAR_ANCHORS[anchorKey(d)].fx * W).strength(0.24))
+    .force('y', d3.forceY(d => PILLAR_ANCHORS[anchorKey(d)].fy * H).strength(0.24))
     .force('collide', d3.forceCollide(d => nodeRadius(d) + 13).strength(0.9))
     .force('charge', d3.forceManyBody().strength(-60))
     .force('link', d3.forceLink(edgeData).distance(75).strength(0.4))
@@ -504,12 +518,62 @@ function init() {
     .attr('stroke-dasharray', '5 3')
     .attr('opacity', 0.55);
 
-  // Main circle
-  nodeGroups.append('circle').attr('class', 'node-circle')
-    .attr('r', d => nodeRadius(d))
-    .attr('fill', d => nodeColor(d))
-    .attr('stroke', d => nodeStroke(d))
-    .attr('stroke-width', 1.5);
+  // Main circle — single fill or N pie wedges for multi-pillar nodes
+  nodeGroups.each(function(d) {
+    const g = d3.select(this);
+    const r = nodeRadius(d);
+    const active = (d.pillars || []).filter(p => PILLAR_COLORS[p]);
+    if (active.length > 1) {
+      const sweep = (2 * Math.PI) / active.length;
+      const start = -Math.PI / 2;
+      active.forEach((p, i) => {
+        g.append('path').attr('class', 'node-circle')
+          .attr('d', wedgePathD(r, start + i * sweep, start + (i + 1) * sweep))
+          .attr('fill', PILLAR_COLORS[p]).attr('stroke', 'none');
+      });
+      g.append('circle').attr('r', r).attr('fill', 'none')
+        .attr('stroke', nodeStroke(d)).attr('stroke-width', 1.5);
+    } else {
+      g.append('circle').attr('class', 'node-circle')
+        .attr('r', r).attr('fill', nodeColor(d))
+        .attr('stroke', nodeStroke(d)).attr('stroke-width', 1.5);
+    }
+  });
+
+  // Grant-funded: centered $ symbol
+  nodeGroups.filter(d => d.type === 'grant')
+    .append('text').attr('class', 'badge-icon')
+    .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
+    .attr('x', 0).attr('y', 0)
+    .attr('font-family', "'Barlow Condensed', sans-serif").attr('font-weight', 900)
+    .attr('font-size', d => Math.round(nodeRadius(d) * 0.65))
+    .attr('fill', '#FDF4E1').attr('paint-order', 'stroke')
+    .attr('stroke', 'rgba(0,0,0,0.22)').attr('stroke-width', '2.5px')
+    .attr('pointer-events', 'none').text('$');
+
+  // Agency/client: dark C badge at bottom-right
+  const agencyG = nodeGroups.filter(d => d.type === 'agency');
+  agencyG.append('circle').attr('class', 'badge-dot')
+    .attr('r', 6).attr('cx', d => nodeRadius(d) * 0.65).attr('cy', d => nodeRadius(d) * 0.65)
+    .attr('fill', '#252525').attr('stroke', 'white').attr('stroke-width', 1.5)
+    .attr('pointer-events', 'none');
+  agencyG.append('text').attr('class', 'badge-icon')
+    .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
+    .attr('x', d => nodeRadius(d) * 0.65).attr('y', d => nodeRadius(d) * 0.65)
+    .attr('font-family', "'Barlow Condensed', sans-serif").attr('font-weight', 700)
+    .attr('font-size', 8).attr('fill', '#FDF4E1').attr('pointer-events', 'none').text('C');
+
+  // Incubating: purple ◆ badge at bottom-left
+  const incubG = nodeGroups.filter(d => d.incubatory);
+  incubG.append('circle').attr('class', 'badge-dot')
+    .attr('r', 6).attr('cx', d => -nodeRadius(d) * 0.65).attr('cy', d => nodeRadius(d) * 0.65)
+    .attr('fill', '#7520DC').attr('stroke', 'white').attr('stroke-width', 1.5)
+    .attr('pointer-events', 'none');
+  incubG.append('text').attr('class', 'badge-icon')
+    .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
+    .attr('x', d => -nodeRadius(d) * 0.65).attr('y', d => nodeRadius(d) * 0.65)
+    .attr('font-family', "'Barlow Condensed', sans-serif").attr('font-weight', 700)
+    .attr('font-size', 8).attr('fill', 'white').attr('pointer-events', 'none').text('◆');
 
   // Status dot
   nodeGroups.append('circle').attr('class', 'status-dot')
@@ -527,7 +591,7 @@ function init() {
   nodeGroups.append('text').attr('class', 'node-label')
     .attr('text-anchor', 'middle')
     .attr('font-family', "'Outfit', sans-serif")
-    .attr('font-size', d => d.size === 'large' ? 14 : 13)
+    .attr('font-size', d => d.size === 'large' ? 17 : 15)
     .attr('font-weight', 600)
     .attr('fill', '#252525')
     .attr('paint-order', 'stroke')
@@ -641,7 +705,10 @@ function renderDetail(d) {
   const PL = { convey:'Conveying', convene:'Convening', cultivate:'Cultivating', advocacy:'Advocacy' };
   const statusLabel = { active:'Active', dormant:'Dormant', adjacent:'Adjacent / Overlapping' }[d.status];
   const statusClass = { active:'badge-active', dormant:'badge-dormant', adjacent:'badge-adjacent' }[d.status];
-  const pillarTags  = d.pillars.map(p => `<span class="pillar-tag pt-${p}">${PL[p]}</span>`).join('');
+  const pillarTags  = d.pillars.filter(p => PL[p]).map(p => `<span class="pillar-tag pt-${p}">${PL[p]}</span>`).join('');
+  const typeMap = { agency:'Agency / Client', grant:'Grant-Funded' };
+  const typeBadge = d.type ? `<span class="badge badge-type-${d.type}">${typeMap[d.type]}</span>` : '';
+  const incubBadge = d.incubatory ? `<span class="badge badge-incub">Incubating</span>` : '';
   const parentProg  = d.parent ? PROGRAMS.find(p => p.id === d.parent) : null;
   const parentHTML  = parentProg
     ? `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--slate);margin-top:12px;margin-bottom:4px;">Part of</div><div style="font-size:13px;color:#3d3830;">${parentProg.name}</div>`
@@ -660,6 +727,7 @@ function renderDetail(d) {
     <div class="detail-badges">
       <span class="badge ${statusClass}">${statusLabel}</span>
       <span class="badge" style="background:#f0ece3;color:#6b6560;">${d.size.charAt(0).toUpperCase()+d.size.slice(1)}</span>
+      ${typeBadge}${incubBadge}
     </div>
     ${noteHTML}${adjNote}${dualNote}
     <p class="detail-desc">${d.desc}</p>

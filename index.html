@@ -329,6 +329,7 @@ const PROGRAMS = [
   { id:'stitchworks',
     name:'Stitchworks',
     size:'medium', status:'active', pillars:['cultivate','convene'], primary_pillar:'cultivate',
+    dualZoneRight: true,
     desc:'Active program within PATTERN\'s cultivating work; focused on a specific creative sector niche centered around sewing, and within the broader talent and ecosystem development mission.' },
 
   // ── ADVOCACY ───────────────────────────────────────────────
@@ -423,8 +424,8 @@ function getAnchors(W, H, labelFontSize) {
   const bottomPad = labelFontSize + 28;
   const usableTop    = topPad;
   const usableBottom = H - bottomPad;
-  const quarterY = usableTop + (usableBottom - usableTop) * 0.38;
-  const threeQY  = usableTop + (usableBottom - usableTop) * 0.62;
+  const quarterY = usableTop + (usableBottom - usableTop) * 0.34;
+  const threeQY  = usableTop + (usableBottom - usableTop) * 0.66;
   // midpoint zone for dual-pillar nodes
   const midY = (quarterY + threeQY) / 2;
   return {
@@ -432,15 +433,18 @@ function getAnchors(W, H, labelFontSize) {
     convene:   { fx: 0.67, fy: quarterY / H },
     cultivate: { fx: 0.67, fy: threeQY  / H },
     advocacy:  { fx: 0.33, fy: threeQY  / H },
-    dual_convey_advocacy: { fx: 0.22, fy: midY / H },
+    // half-and-half nodes sit on their side's column, at the vertical center between the two pillars
+    dual_convey_advocacy:   { fx: 0.33, fy: midY / H },  // left-center: conveying ↕ advocacy
+    dual_convene_cultivate: { fx: 0.67, fy: midY / H },  // right-center: convening ↕ cultivating
     alumni:    { fx: 0.67, fy: midY    / H },   // right-center, between convene + cultivate
     allPillars:{ fx: 0.50, fy: 0.50 },           // canvas center for programs spanning all 4
   };
 }
 
 function anchorKey(d) {
-  if (d.allPillars) return 'allPillars';
-  if (d.dualZone)   return 'dual_convey_advocacy';
+  if (d.allPillars)    return 'allPillars';
+  if (d.dualZone)      return 'dual_convey_advocacy';
+  if (d.dualZoneRight) return 'dual_convene_cultivate';
   return d.primary_pillar;
 }
 
@@ -463,7 +467,7 @@ function init() {
   PILLAR_LABEL_DEFS.forEach(pl => {
     const col     = PILLAR_COLORS[pl.key];
     const x       = pl.hAlign === 'left' ? pad : W - pad;
-    const y       = pl.side === 'top'    ? pad : H - pad;
+    const y       = pl.side === 'top'    ? pad : H - pad - 22;
     const anchor  = pl.hAlign === 'left' ? 'start' : 'end';
     const baseline = pl.side === 'top'   ? 'hanging' : 'auto';
     svg.append('text')
@@ -513,8 +517,8 @@ function init() {
   simulation = d3.forceSimulation(nodes)
     .force('x', d3.forceX(d => PILLAR_ANCHORS[anchorKey(d)].fx * W).strength(0.24))
     .force('y', d3.forceY(d => PILLAR_ANCHORS[anchorKey(d)].fy * H).strength(0.24))
-    .force('collide', d3.forceCollide(d => nodeRadius(d) + 13).strength(0.9))
-    .force('charge', d3.forceManyBody().strength(-60))
+    .force('collide', d3.forceCollide(d => nodeRadius(d) + 24).strength(0.92))
+    .force('charge', d3.forceManyBody().strength(-95))
     .force('link', d3.forceLink(edgeData).distance(75).strength(0.4))
     .alpha(1).alphaDecay(0.025)
     .on('tick', () => {

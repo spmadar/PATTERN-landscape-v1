@@ -55,6 +55,7 @@
   .sidebar-toggle-btn { width: 100%; padding: 9px 11px; background: white; border: none; border-bottom: 1.5px solid #e8e2d4; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: var(--font-body); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate); white-space: nowrap; flex-shrink: 0; }
   .sidebar-toggle-btn:hover { background: var(--cream); }
   .sidebar-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 298px; }
+  .sidebar-content.pillar-mode .legend-section { display: none; }
   .legend-section { padding: 20px 20px 16px; border-bottom: 1.5px solid #e8e2d4; }
   .legend-title { font-family: var(--font-display); font-weight: 900; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); margin-bottom: 12px; }
   .legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; font-size: 13px; }
@@ -203,7 +204,7 @@ const PROGRAMS = [
   { id:'summit',
     name:'Annual Creative Economy Summit',
     size:'large', status:'active', pillars:['convene'], primary_pillar:'convene',
-    desc:'PATTERN\'s flagship convening event. Brings together Indiana\'s creative sector annually for cross-sector dialogue, connection, and advocacy. The highest-weight convening program.' },
+    desc:'PATTERN\'s flagship convening event. Brings together Indiana\'s creative sector annually for cross-sector dialogue, connection, and advocacy. The highest-weight convening program and our signature event.' },
 
   { id:'stutz',
     name:'Stutz Events & Social',
@@ -213,18 +214,18 @@ const PROGRAMS = [
   { id:'ksm-panel',
     name:'KSM Panel Partnership',
     size:'small', status:'active', pillars:['convene'], primary_pillar:'convene',
-    desc:'A panel partnership with KSM. Small but active — contributes to convening creative and business communities in cross-sector conversation.' },
+    desc:'A panel partnership with Katz Sapper Miller, an employee-owned accounting and advisory firm helping clients and communities achieve their goals (<a href="https://www.ksmcpa.com/" target="_blank">ksmcpa.com</a>). Contributes to convening creative and business communities in cross-sector conversation.' },
 
   { id:'the-bus',
     name:'The Bus',
     size:'small', status:'dormant', pillars:['convene'], primary_pillar:'convene',
-    desc:'A small, dormant convening initiative — likely a mobile or touring activation. Currently inactive.' },
+    desc:'A small, dormant convening initiative based around a decommissioned IndyGo bus.' },
 
   // ── CONVEYING ──────────────────────────────────────────────
   { id:'pattern-mag',
     name:'PATTERN Magazine',
     size:'large', status:'active', pillars:['convey'], primary_pillar:'convey',
-    desc:'PATTERN\'s flagship publication — the most visible conveying asset. Tells stories about Indiana\'s creative economy, its people, businesses, and culture.' },
+    desc:'PATTERN\'s flagship publication and the most visible conveying asset. Tells stories about Indiana\'s creative economy, its people, businesses, and culture.' },
 
   { id:'digital-covers',
     name:'Digital Covers',
@@ -234,7 +235,7 @@ const PROGRAMS = [
   { id:'zine',
     name:'11th + Capitol Zine',
     size:'small', status:'dormant', pillars:['convey'], primary_pillar:'convey',
-    desc:'A zine publication formerly produced by PATTERN. Dormant — part of the conveying function through grassroots, independent publishing.' },
+    desc:'A zine publication produced by PATTERN. Dormant but always executed by interns or fellows.' },
 
   { id:'other-zines',
     name:'Other Zines',
@@ -244,7 +245,7 @@ const PROGRAMS = [
   { id:'wesleys-project',
     name:"Wesley's Project",
     size:'medium', status:'active', pillars:['advocacy'], primary_pillar:'advocacy',
-    desc:"An active advocacy initiative. Specific scope is still being defined — positioned within PATTERN's Advocacy cluster." },
+    desc:"A data-driven initiative illuminating the impact of the creative economy. Provides comprehensive data analysis tools and transforms raw data into compelling, accessible reports that help communities." },
 
   // CE Playbook spans Conveying + Advocacy; primary set to 'convey'
   // but we'll apply a custom anchor midpoint in the force layout
@@ -252,26 +253,26 @@ const PROGRAMS = [
     name:'Creative Economy Playbook / Network',
     size:'large', status:'dormant', pillars:['convey','advocacy'], primary_pillar:'convey',
     dualZone: true, splitColors: ['#3372F1','#7520DC'],
-    desc:'A resource and network initiative spanning both Conveying and Advocacy. Currently dormant — represents a significant future reactivation opportunity across both functions.' },
+    desc:'A resource and network initiative spanning both Conveying and Advocacy. Currently dormant.' },
 
   // Client work — functional fit is Conveying; flagged as client work
   { id:'iedc-yearbook',
     name:'IEDC Yearbook',
     size:'medium', status:'active', pillars:['convey'], primary_pillar:'convey',
     note:'Client work',
-    desc:'Client work produced for the Indiana Economic Development Corporation. Contributes to PATTERN\'s conveying function by communicating the state\'s economic development narrative.' },
+    desc:'Client work produced for the Indiana Economic Development Corporation. An annual magazine that features 100 small businesses and some ecosystems; relays a portion of the state\'s economic development narrative.' },
 
   { id:'iu-innovates',
     name:'IU Innovates',
     size:'medium', status:'active', pillars:['convey'], primary_pillar:'convey',
     note:'Client work',
-    desc:'Client project with Indiana University, communicating innovation stories. Part of the active client work portfolio within the conveying function.' },
+    desc:'Client project with Indiana University, communicating innovation stories. Part of the active client work portfolio.' },
 
   { id:'other-client',
     name:'Other Client Projects',
     size:'medium', status:'active', pillars:['convey'], primary_pillar:'convey',
     note:'Client work',
-    desc:'Ongoing client-facing work beyond named anchor clients. Contributes to PATTERN\'s revenue and the conveying function.' },
+    desc:'Ongoing client-facing work beyond named anchor clients.' },
 
   // ── ALUMNI (between Convening + Cultivating) ───────────────
   { id:'alumni',
@@ -284,17 +285,17 @@ const PROGRAMS = [
   { id:'intern-program',
     name:'Intern Program',
     size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
-    desc:'PATTERN\'s internship pipeline for emerging creative talent in Indiana. Active and focused on workforce development and hands-on learning.' },
+    desc:'PATTERN\'s internship pipeline for emerging creative talent in Indiana. Active and focused on workforce development, meaningful mentorship, and hands-on learning.' },
 
   { id:'fellowship',
     name:'Fellowship Program',
     size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
-    desc:'A deeper talent investment than the internship — fellows receive extended engagement with PATTERN\'s mission and work. Central to the cultivating function.' },
+    desc:'A deeper talent investment. Fellows receive extended engagement with PATTERN\'s mission and work.' },
 
   { id:'space-residency',
     name:'S.P.A.C.E. Residency',
     size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
-    desc:'A residency program supporting creative practitioners with space, community, and resources to develop their practice. Active.' },
+    desc:'A residency program supporting creative practitioners with space, community, and resources to develop their practice.' },
 
   { id:'createway',
     name:'CreateWay Speakers Bureau',
@@ -304,13 +305,13 @@ const PROGRAMS = [
   { id:'stitchworks',
     name:'Stitchworks',
     size:'medium', status:'active', pillars:['cultivate'], primary_pillar:'cultivate',
-    desc:'Active program within PATTERN\'s cultivating work — focused on a specific creative sector niche within the broader talent and ecosystem development mission.' },
+    desc:'Active program within PATTERN\'s cultivating work; focused on a specific creative sector niche centered around sewing, and within the broader talent and ecosystem development mission.' },
 
   // ── ADVOCACY ───────────────────────────────────────────────
   { id:'cela',
     name:'CELA',
     size:'medium', status:'adjacent', pillars:['advocacy'], primary_pillar:'advocacy',
-    desc:'An adjacent initiative in PATTERN\'s orbit focused on advocacy for Indiana\'s creative economy. Externally affiliated — active and overlapping in mission.' },
+    desc:'The Creative Economy Leadership Alliance: an adjacent initiative in PATTERN\'s orbit focused on advocacy for Indiana\'s creative economy. Externally affiliated but active and overlapping in mission.' },
 
   { id:'indiana-music',
     name:'Indiana Music Alliance',
@@ -321,7 +322,7 @@ const PROGRAMS = [
     name:'IMA Panels',
     size:'small', status:'adjacent', pillars:['convene','advocacy'], primary_pillar:'advocacy',
     parent:'indiana-music',
-    desc:'Panel programming in partnership with the Indiana Music Alliance. A sub-initiative of IMA — active and small, serving both convening and advocacy functions.' },
+    desc:'Panel programming in partnership with the Indiana Music Alliance. A sub-initiative of IMA serving both convening and advocacy functions.' },
 ];
 
 const EDGES = [
@@ -526,7 +527,7 @@ function init() {
   nodeGroups.append('text').attr('class', 'node-label')
     .attr('text-anchor', 'middle')
     .attr('font-family', "'Outfit', sans-serif")
-    .attr('font-size', d => d.size === 'large' ? 12 : 11)
+    .attr('font-size', d => d.size === 'large' ? 14 : 13)
     .attr('font-weight', 600)
     .attr('fill', '#252525')
     .attr('paint-order', 'stroke')
@@ -619,6 +620,7 @@ function renderPillarDetail(key) {
   activeNode = null;
   stopPulse();
   updateDim();
+  document.querySelector('.sidebar-content').classList.add('pillar-mode');
   const panel = document.getElementById('detail-panel');
   panel.innerHTML = `
     <div class="detail-name" style="color:${PILLAR_COLORS[key]}">${PILLAR_DISPLAY[key]}</div>
@@ -633,6 +635,7 @@ function updateDim() {
 }
 
 function renderDetail(d) {
+  document.querySelector('.sidebar-content').classList.remove('pillar-mode');
   const panel = document.getElementById('detail-panel');
   if (!d) { panel.innerHTML = '<div class="detail-empty">Click any program node to see details here.</div>'; return; }
   const PL = { convey:'Conveying', convene:'Convening', cultivate:'Cultivating', advocacy:'Advocacy' };

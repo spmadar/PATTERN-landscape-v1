@@ -63,8 +63,8 @@
   .legend-size-label { font-size: 12px; color: #6b6560; }
   .sz-large  { width: 28px; height: 28px; border-radius: 50%; background: #c5c0b8; }
   .sz-medium { width: 16px; height: 16px; border-radius: 50%; background: #c5c0b8; }
-  .sz-small  { width: 10px; height: 10px; border-radius: 50%; background: #c5c0b8; }
-  .detail-panel { flex: 0 0 auto; padding: 20px; }
+  .sz-small  { width: 7px; height: 7px; border-radius: 50%; background: #c5c0b8; }
+  .detail-panel { flex: 0 0 auto; padding: 20px 20px 0; }
   .sidebar-reopen-tab { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 22px; height: 60px; background: var(--near-black); border: none; border-radius: 8px 0 0 8px; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 20; color: var(--cream); padding: 0; box-shadow: -2px 0 8px rgba(0,0,0,0.18); }
   .sidebar-reopen-tab:hover { background: #3d3d3d; }
   .detail-empty { font-size: 13px; color: #a09a92; font-style: italic; line-height: 1.6; padding-top: 8px; }
@@ -182,7 +182,17 @@ const PILLAR_COLORS = {
   cultivate: '#F74135',
   advocacy:  '#7520DC',
 };
-const NODE_RADII = { large: 48, medium: 22, small: 14 };
+const NODE_RADII = { large: 48, medium: 22, small: 9 };
+
+const PILLAR_DESCS = {
+  convey:    "Programs that tell stories, publish ideas, or communicate PATTERN's POV.",
+  convene:   'Programs or projects that bring people together.',
+  cultivate: 'Programs that support talent, creative businesses, workforce development, or ecosystem-building.',
+  advocacy:  "Efforts that organize, represent, or advance Indiana's creative economy.",
+};
+const PILLAR_DISPLAY = {
+  convey: 'Conveying', convene: 'Convening', cultivate: 'Cultivating', advocacy: 'Advocacy',
+};
 
 // primary_pillar drives cluster placement.
 // For dual-pillar nodes (e.g. CE Playbook: convey+advocacy),
@@ -414,9 +424,15 @@ function init() {
       .attr('text-anchor', anchor)
       .attr('dominant-baseline', baseline)
       .attr('opacity', 0.38)
-      .attr('pointer-events', 'none')
+      .attr('cursor', 'pointer')
       .attr('user-select', 'none')
-      .text(pl.label);
+      .text(pl.label)
+      .on('mouseover', function() { d3.select(this).attr('opacity', 0.72); })
+      .on('mouseout',  function() { d3.select(this).attr('opacity', 0.38); })
+      .on('click', function(event) {
+        event.stopPropagation();
+        renderPillarDetail(pl.key);
+      });
   });
 
   nodes = PROGRAMS.map(d => {
@@ -597,6 +613,17 @@ function deselectNode() {
   stopPulse();
   renderDetail(null);
   updateDim();
+}
+
+function renderPillarDetail(key) {
+  activeNode = null;
+  stopPulse();
+  updateDim();
+  const panel = document.getElementById('detail-panel');
+  panel.innerHTML = `
+    <div class="detail-name" style="color:${PILLAR_COLORS[key]}">${PILLAR_DISPLAY[key]}</div>
+    <p class="detail-desc">${PILLAR_DESCS[key]}</p>
+  `;
 }
 
 function applyFilters() { updateDim(); }

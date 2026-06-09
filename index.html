@@ -427,18 +427,19 @@ function getAnchors(W, H, labelFontSize) {
   const usableBottom = H - bottomPad;
   const quarterY = usableTop + (usableBottom - usableTop) * 0.30;
   const threeQY  = usableTop + (usableBottom - usableTop) * 0.70;
+  const conveneY = usableTop + (usableBottom - usableTop) * 0.22;  // convening sits higher, nearer its corner label
   // midpoint zone for dual-pillar nodes
   const midY = (quarterY + threeQY) / 2;
   return {
     // single-pillar clusters hug their corners
     convey:    { fx: 0.27, fy: quarterY / H },
-    convene:   { fx: 0.73, fy: quarterY / H },
+    convene:   { fx: 0.76, fy: conveneY / H },
     cultivate: { fx: 0.73, fy: threeQY  / H },
     advocacy:  { fx: 0.27, fy: threeQY  / H },
-    // half-and-half nodes sit in the central band, vertically centered between the two pillars
-    dual_convey_advocacy:   { fx: 0.35, fy: midY / H },  // left-center: conveying ↕ advocacy
-    dual_convene_cultivate: { fx: 0.65, fy: midY / H },  // right-center: convening ↕ cultivating
-    alumni:    { fx: 0.65, fy: midY    / H },   // right-center, between convene + cultivate
+    // half-and-half nodes sit in their side's column, vertically centered between the two pillars
+    dual_convey_advocacy:   { fx: 0.30, fy: midY / H },  // left column: conveying ↕ advocacy
+    dual_convene_cultivate: { fx: 0.70, fy: midY / H },  // right column: convening ↕ cultivating
+    alumni:    { fx: 0.70, fy: midY    / H },   // right column, between convene + cultivate
     allPillars:{ fx: 0.50, fy: 0.50 },           // canvas center for programs spanning all 4
   };
 }
